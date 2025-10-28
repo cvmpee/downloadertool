@@ -15,7 +15,6 @@ WARNING: MAKE SURE U HAVE THE SUSPECT'S CONSENT BEFORE RUNNING,
 SCRIPT WILL ADD C:\SCREENSHARE TO ANTIVIRUS EXCLUSIONS. 
 "@ -ForegroundColor Red
 
-# Controllo privilegi amministrativi
 $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
 if (-not $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     Write-Host "This script requires Administrator privileges." -ForegroundColor Yellow
@@ -35,7 +34,6 @@ if (-not $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Adm
     }
 }
 
-# Creazione cartella download
 $DownloadPath = "C:\Screenshare"
 if (!(Test-Path $DownloadPath)) {
     New-Item -ItemType Directory -Path $DownloadPath -Force | Out-Null
@@ -58,7 +56,7 @@ function Add-DefenderExclusion {
         }
     }
     catch {}
-
+    
     if (-not $success) {
         try {
             $regPath = "HKLM:\SOFTWARE\Microsoft\Windows Defender\Exclusions\Paths"
@@ -147,10 +145,10 @@ function Download-Tools {
         }
     }
     
-    Write-Host "$CategoryName: $successCount/$($Tools.Count) tools downloaded successfully" -ForegroundColor Cyan
+    # FIX: usiamo ${} per evitare errore di parsing
+    Write-Host "${CategoryName}: $successCount/$($Tools.Count) tools downloaded successfully" -ForegroundColor Cyan
 }
 
-# Liste strumenti
 $spowksucksasscheeks = @(
     @{ Name="Kernel Live Dump Analyzer Parser"; Url="https://github.com/spokwn/KernelLiveDumpTool/releases/download/v1.1/KernelLiveDumpTool.exe"; File="KernelLiveDumpTool.exe" },
     @{ Name="BAM Parser"; Url="https://github.com/spokwn/BAM-parser/releases/download/v1.2.9/BAMParser.exe"; File="BAMParser.exe" },
