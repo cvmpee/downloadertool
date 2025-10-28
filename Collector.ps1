@@ -11,10 +11,11 @@ Write-Host @"
 "@ -ForegroundColor Cyan                                               
 
 Write-Host @"
-WARNING: MAKE SURE U HAVE THE SUSPECTS CONSENT BEFORE RUNNING, 
+WARNING: MAKE SURE U HAVE THE SUSPECT'S CONSENT BEFORE RUNNING, 
 SCRIPT WILL ADD C:\SCREENSHARE TO ANTIVIRUS EXCLUSIONS. 
 "@ -ForegroundColor Red
 
+# Controllo privilegi amministrativi
 $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
 if (-not $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     Write-Host "This script requires Administrator privileges." -ForegroundColor Yellow
@@ -30,15 +31,15 @@ if (-not $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Adm
         exit
     }
     catch {
-        Write-Host "no admin" -ForegroundColor Red
+        Write-Host "No admin privileges." -ForegroundColor Red
     }
 }
 
+# Creazione cartella download
 $DownloadPath = "C:\Screenshare"
 if (!(Test-Path $DownloadPath)) {
     New-Item -ItemType Directory -Path $DownloadPath -Force | Out-Null
 }
-
 
 function Add-DefenderExclusion {
     Write-Host "`nSetting up antivirus exclusion" -ForegroundColor Cyan
@@ -46,7 +47,6 @@ function Add-DefenderExclusion {
     
     $success = $false
     
-
     try {
         if (Get-Command Get-MpPreference -ErrorAction SilentlyContinue) {
             $existingExclusions = (Get-MpPreference -ErrorAction Stop).ExclusionPath
@@ -57,11 +57,8 @@ function Add-DefenderExclusion {
             $success = $true
         }
     }
-    catch {
-      
-    }
-    
-  
+    catch {}
+
     if (-not $success) {
         try {
             $regPath = "HKLM:\SOFTWARE\Microsoft\Windows Defender\Exclusions\Paths"
@@ -74,12 +71,9 @@ function Add-DefenderExclusion {
                 $success = $true
             }
         }
-        catch {
-           
-        }
+        catch {}
     }
-    
-    
+
     if (-not $success) {
         try {
             $namespace = "root\Microsoft\Windows\Defender"
@@ -90,32 +84,30 @@ function Add-DefenderExclusion {
                 $success = $true
             }
         }
-        catch {
-           
-        }
+        catch {}
     }
-    
+
     if (-not $success) {
         Write-Host " Failed" -ForegroundColor Red
-        
     }
     
     return $success
 }
 
-
 $exclusionAdded = Add-DefenderExclusion
 
 if (-not $exclusionAdded) {
-    Write-Host "`nCould not add automatic antivirus exclusion, you are prolly using some 3rd party av." -ForegroundColor Yellow
+    Write-Host "`nCould not add automatic antivirus exclusion, you are probably using some 3rd party AV." -ForegroundColor Yellow
     Write-Host "`nContinuing with downloads (some might be deleted)" -ForegroundColor Yellow
     Start-Sleep -Seconds 3
-} else {
-    
 }
 
 function Download-File {
-    param([string]$Url, [string]$FileName, [string]$ToolName)
+    param(
+        [string]$Url,
+        [string]$FileName,
+        [string]$ToolName
+    )
     
     try {
         $outputPath = Join-Path $DownloadPath $FileName
@@ -141,7 +133,10 @@ function Download-File {
 }
 
 function Download-Tools {
-    param([array]$Tools, [string]$CategoryName)
+    param(
+        [array]$Tools,
+        [string]$CategoryName
+    )
     
     $successCount = 0
     
@@ -152,9 +147,10 @@ function Download-Tools {
         }
     }
     
-    Write-Host ($CategoryName + ": " + $successCount + "/" + $Tools.Count + " tools downloaded successfully") -ForegroundColor Cyan
+    Write-Host "$CategoryName: $successCount/$($Tools.Count) tools downloaded successfully" -ForegroundColor Cyan
 }
 
+# Liste strumenti
 $spowksucksasscheeks = @(
     @{ Name="Kernel Live Dump Analyzer Parser"; Url="https://github.com/spokwn/KernelLiveDumpTool/releases/download/v1.1/KernelLiveDumpTool.exe"; File="KernelLiveDumpTool.exe" },
     @{ Name="BAM Parser"; Url="https://github.com/spokwn/BAM-parser/releases/download/v1.2.9/BAMParser.exe"; File="BAMParser.exe" },
@@ -163,18 +159,14 @@ $spowksucksasscheeks = @(
     @{ Name="Tool"; Url="https://github.com/spokwn/Tool/releases/download/v1.1.3/espouken.exe"; File="espouken.exe" },
     @{ Name="PcaSvc Executed"; Url="https://github.com/spokwn/pcasvc-executed/releases/download/v0.8.7/PcaSvcExecuted.exe"; File="PcaSvcExecuted.exe" },
     @{ Name="BAM Deleted Keys"; Url="https://github.com/spokwn/BamDeletedKeys/releases/download/v1.0/BamDeletedKeys.exe"; File="BamDeletedKeys.exe" },
-    @{ Name="Prefetch Parser"; Url="https://github.com/spokwn/prefetch-parser/releases/download/v1.5.5/PrefetchParser.exe"; File="PrefetchParser.exe" },
-    
+    @{ Name="Prefetch Parser"; Url="https://github.com/spokwn/prefetch-parser/releases/download/v1.5.5/PrefetchParser.exe"; File="PrefetchParser.exe" }
 )
 
-$zimmermanTools = @(
-    
-)
+$zimmermanTools = @()
 
 $nirsoftTools = @(
     @{ Name="WinPrefetchView"; Url="https://www.nirsoft.net/utils/winprefetchview-x64.zip"; File="winprefetchview-x64.zip" },
-    @{ Name="USBDeview"; Url="https://www.nirsoft.net/utils/usbdeview-x64.zip"; File="usbdeview-x64.zip" },
-  
+    @{ Name="USBDeview"; Url="https://www.nirsoft.net/utils/usbdeview-x64.zip"; File="usbdeview-x64.zip" }
 )
 
 $otherTools = @(
@@ -182,7 +174,6 @@ $otherTools = @(
     @{ Name="Everything Search"; Url="https://www.voidtools.com/Everything-1.4.1.1029.x86-Setup.exe"; File="Everything-1.4.1.1029.x86-Setup.exe" },
     @{ Name="FTK Imager"; Url="https://d1kpmuwb7gvu1i.cloudfront.net/AccessData_FTK_Imager_4.7.1.exe"; File="AccessData_FTK_Imager_4.7.1.exe" }
 )
-
 
 $response = Read-Host "`nDo you want to download Spokwn's tools? (Y/N)"
 if ($response -match '^[Yy]') {
@@ -193,7 +184,7 @@ $response = Read-Host "`nDo you want to download Zimmerman's tools? (Y/N)"
 if ($response -match '^[Yy]') {
     Download-Tools -Tools $zimmermanTools -CategoryName "Zimmerman's"
     
-    $runtimeResponse = Read-Host "`nWould you like to install the .NET Runtime (required for zimmerman) (Y/N)"
+    $runtimeResponse = Read-Host "`nWould you like to install the .NET Runtime (required for Zimmerman) (Y/N)"
     if ($runtimeResponse -match '^[Yy]') {
         Download-File -Url "https://builds.dotnet.microsoft.com/dotnet/Sdk/9.0.306/dotnet-sdk-9.0.306-win-x64.exe" -FileName "dotnet-sdk-9.0.306-win-x64.exe" -ToolName ".NET Runtime"
     }
@@ -204,17 +195,16 @@ if ($response -match '^[Yy]') {
     Download-Tools -Tools $nirsoftTools -CategoryName "Nirsoft"
 }
 
-Write-Host "`nNote: hayabusa might flag as a virus (its very safe n open source)" -ForegroundColor Yellow
+Write-Host "`nNote: Hayabusa might flag as a virus (it's very safe and open source)" -ForegroundColor Yellow
 $response = Read-Host "Do you want to download Hayabusa? (Y/N)"
 if ($response -match '^[Yy]') {
     Download-File -Url "https://github.com/Yamato-Security/hayabusa/releases/download/v3.6.0/hayabusa-3.6.0-win-x64.zip" -FileName "hayabusa-3.6.0-win-x64.zip" -ToolName "Hayabusa"
 }
 
-$response = Read-Host "`nDo you want to download other common tools (i couldnt think of a category)? (Y/N)"
+$response = Read-Host "`nDo you want to download other common tools (no specific category)? (Y/N)"
 if ($response -match '^[Yy]') {
     Download-Tools -Tools $otherTools -CategoryName "Other Common"
 }
 
-Write-Host "`cqmpe the best" -ForegroundColor Cyan
+Write-Host "`ncqmpe the best" -ForegroundColor Cyan
 Write-Host "Downloads are located in: $DownloadPath" -ForegroundColor Cyan
-
